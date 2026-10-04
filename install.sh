@@ -19,7 +19,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-  xserver-xorg xinit openbox firefox-esr x11-xserver-utils unclutter dbus-x11 ca-certificates
+  xserver-xorg xinit openbox firefox x11-xserver-utils unclutter dbus-x11 ca-certificates
 
 if [ -z "$URL" ] && [ -f "$CONF" ]; then
   URL="$(sed -n 's/^KIOSK_URL="\(.*\)"/\1/p' "$CONF" | head -n1)"
