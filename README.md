@@ -1,6 +1,6 @@
 # Orange Pi Home Assistant Kiosk
 
-Minimal Firefox kiosk for **Orange Pi PC Plus** running **Armbian / Debian 13 (Trixie)**.
+Minimal Firefox kiosk for **Orange Pi PC Plus** running **Armbian Community / Ubuntu 26.04 (Resolute Raccoon)**.
 
 Default display setup is tailored for a 1024x600 HDMI panel mounted vertically:
 
@@ -9,7 +9,7 @@ Default display setup is tailored for a 1024x600 HDMI panel mounted vertically:
 - framebuffer: 600x1024
 - Composite-1: disabled
 - user: winner
-- Firefox ESR kiosk mode
+- Firefox kiosk mode
 - no full desktop environment
 - cursor auto-hide
 - DPMS/screensaver disabled
@@ -17,7 +17,7 @@ Default display setup is tailored for a 1024x600 HDMI panel mounted vertically:
 
 ## Fresh install
 
-Start with a clean Armbian Debian 13 installation. Finish Armbian's first-login wizard and create the user `winner`.
+Start with a clean Armbian Community Ubuntu 26.04 Resolute installation. Finish Armbian's first-login wizard and create the user `winner`.
 
 Install git:
 
@@ -55,7 +55,7 @@ Armbian
   -> startx
   -> Openbox
   -> display configuration
-  -> Firefox ESR --kiosk
+  -> Firefox --kiosk
   -> Home Assistant
 ```
 
