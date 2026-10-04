@@ -71,7 +71,7 @@ Example:
 
 ```bash
 KIOSK_URL="http://192.168.55.1"
-HDMI_OUTPUT="HDMI-1"
+HDMI_OUTPUT="HDMI-1-1"
 HDMI_MODE="1024x600"
 ROTATION="right"
 FRAMEBUFFER="600x1024"
@@ -104,7 +104,7 @@ Expected important lines:
 
 ```text
 Screen 0: ... current 600 x 1024
-HDMI-1 connected primary 600x1024 ... right
+HDMI-1-1 connected primary 600x1024 ... right
 Composite-1 connected ...
 ```
 
