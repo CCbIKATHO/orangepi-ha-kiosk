@@ -29,7 +29,7 @@ unclutter -idle 0.5 -root &
 
 # Keep Firefox alive. If it exits, restart it after a short delay.
 while true; do
-  firefox-esr --kiosk "$KIOSK_URL"
+  firefox --kiosk "$KIOSK_URL"
   echo "$(date -Is) Firefox exited; restarting in 2 seconds"
   sleep 2
 done
