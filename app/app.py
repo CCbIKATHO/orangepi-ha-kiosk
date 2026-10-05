@@ -10,6 +10,7 @@ from aiohttp import web
 
 BASE_DIR = Path("/opt/jk-display")
 INDEX_FILE = BASE_DIR / "index.html"
+POWER_STATE_FILE = Path("/run/jk-power-state.json")
 
 
 class BatteryClient:
@@ -122,8 +123,26 @@ async def index(_request: web.Request) -> web.StreamResponse:
     )
 
 
+def power_snapshot() -> dict[str, object]:
+    try:
+        import json
+        data = json.loads(POWER_STATE_FILE.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+    except Exception:
+        pass
+    return {
+        "configured": True,
+        "present": None,
+        "raw": None,
+        "error": "power monitor has no data",
+    }
+
+
 async def api_state(_request: web.Request) -> web.Response:
-    return web.json_response({name: battery.snapshot() for name, battery in BATTERIES.items()})
+    payload = {name: battery.snapshot() for name, battery in BATTERIES.items()}
+    payload["mains"] = power_snapshot()
+    return web.json_response(payload)
 
 
 async def health(_request: web.Request) -> web.Response:
