@@ -1,15 +1,15 @@
-name: Build WT32 JK-BMS 48V 13S firmware
+name: Build WT32 JK-BMS 48V 14S firmware
 
 on:
   push:
     branches: [ main ]
     paths:
-      - "esphome/wt32-jk-bms-48v-13s.yaml"
+      - "esphome/wt32-jk-bms-48v-14s.yaml"
       - ".github/workflows/build-wt32-48v.yml"
   pull_request:
     branches: [ main ]
     paths:
-      - "esphome/wt32-jk-bms-48v-13s.yaml"
+      - "esphome/wt32-jk-bms-48v-14s.yaml"
       - ".github/workflows/build-wt32-48v.yml"
   workflow_dispatch:
 
@@ -34,28 +34,28 @@ jobs:
 
       - name: Validate ESPHome config
         run: |
-          esphome config esphome/wt32-jk-bms-48v-13s.yaml
+          esphome config esphome/wt32-jk-bms-48v-14s.yaml
 
       - name: Compile firmware
         run: |
-          esphome compile esphome/wt32-jk-bms-48v-13s.yaml
+          esphome compile esphome/wt32-jk-bms-48v-14s.yaml
 
       - name: Collect firmware
         shell: bash
         run: |
           mkdir -p dist
           BUILD_DIR="esphome/.esphome/build/jk-bms-48v/.pioenvs/jk-bms-48v"
-          cp "$BUILD_DIR/firmware.factory.bin" dist/jk-bms-48v-13s.factory.bin
-          cp "$BUILD_DIR/firmware.bin" dist/jk-bms-48v-13s.ota.bin
+          cp "$BUILD_DIR/firmware.factory.bin" dist/jk-bms-48v-14s.factory.bin
+          cp "$BUILD_DIR/firmware.bin" dist/jk-bms-48v-14s.ota.bin
           cp /tmp/api-key.txt dist/api-key.txt
           cat > dist/README.txt <<'EOF'
-JK-BMS 48V 13S / WT32-ETH01
+JK-BMS 48V 14S / WT32-ETH01
 
 First flash over USB-TTL:
-  jk-bms-48v-13s.factory.bin
+  jk-bms-48v-14s.factory.bin
 
 OTA update:
-  jk-bms-48v-13s.ota.bin
+  jk-bms-48v-14s.ota.bin
 
 ESPHome Native API encryption key:
   api-key.txt
@@ -69,6 +69,6 @@ EOF
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
-          name: wt32-jk-bms-48v-13s
+          name: wt32-jk-bms-48v-14s
           path: dist/
           if-no-files-found: error
