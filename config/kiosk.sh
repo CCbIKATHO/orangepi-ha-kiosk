@@ -10,6 +10,7 @@ HDMI_MODE="${HDMI_MODE:-1024x600}"
 ROTATION="${ROTATION:-right}"
 WINDOW_WIDTH="${WINDOW_WIDTH:-600}"
 WINDOW_HEIGHT="${WINDOW_HEIGHT:-1024}"
+BROWSER_RESTART_SECONDS="${BROWSER_RESTART_SECONDS:-3600}"
 
 export DISPLAY="${DISPLAY:-:0}"
 export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
@@ -64,8 +65,17 @@ while true; do
       >>"$HOME/.local/state/jk-chromium.log" 2>&1 &
 
     CHROMIUM_PID=$!
+    CHROMIUM_STARTED="$(date +%s)"
 
     while kill -0 "$CHROMIUM_PID" 2>/dev/null; do
+        NOW="$(date +%s)"
+        if [ "$BROWSER_RESTART_SECONDS" -gt 0 ] &&
+           [ $((NOW - CHROMIUM_STARTED)) -ge "$BROWSER_RESTART_SECONDS" ]; then
+            echo "$(date -Is) Плановий перезапуск Chromium після ${BROWSER_RESTART_SECONDS} с" \
+              >>"$HOME/.local/state/jk-chromium.log"
+            kill "$CHROMIUM_PID" 2>/dev/null || true
+            break
+        fi
         WIN="$(
           wmctrl -lx 2>/dev/null |
           awk 'tolower($3) ~ /chromium/ {print $1; exit}'
