@@ -1,130 +1,250 @@
-# Orange Pi Home Assistant Kiosk
+# Orange Pi JK-BMS Dashboard
 
-Minimal Firefox kiosk for **Orange Pi PC Plus** running **Armbian Community / Ubuntu 26.04 (Resolute Raccoon)**.
+Локальна панель моніторингу двох акумуляторів JK-BMS на **Orange Pi PC Plus**.
 
-Default display setup is tailored for a 1024x600 HDMI panel mounted vertically:
+Проєкт працює **без Home Assistant**: Orange Pi напряму підключається до кожного WT32-ETH01 через **ESPHome Native API**. Home Assistant можна підключити паралельно до тих самих ESPHome-пристроїв.
 
-- HDMI mode: 1024x600
-- rotation: right
-- framebuffer: 600x1024
-- Composite-1: disabled
-- user: winner
-- Firefox kiosk mode
-- no full desktop environment
-- cursor auto-hide
-- DPMS/screensaver disabled
-- automatic graphical login and browser restart
+Поточна схема:
 
-## Fresh install
+```text
+JK-BMS 24V -> UART -> WT32-ETH01 #1 -> Ethernet -> Orange Pi Dashboard
+                                      \-> Home Assistant (опційно)
 
-Start with a clean Armbian Community Ubuntu 26.04 Resolute installation. Finish Armbian's first-login wizard and create the user `winner`.
-
-Install git:
-
-```bash
-apt update
-apt install -y git
+JK-BMS 48V -> UART -> WT32-ETH01 #2 -> Ethernet -> Orange Pi Dashboard
+                                      \-> Home Assistant (опційно)
 ```
 
-Clone this repository:
+## Що показує панель
+
+Для кожного акумулятора:
+
+- SOC, %
+- заряд / розряд / очікування
+- напруга
+- струм
+- потужність
+- різниця напруг між комірками
+- температура АКБ
+- температура MOSFET
+- статус BMS
+- помилки BMS
+
+Інтерфейс оптимізований під вертикальний HDMI-дисплей **600×1024**.
+
+## Перевірена конфігурація
+
+Orange Pi:
+
+- Orange Pi PC Plus / Allwinner H3
+- Armbian Community
+- Ubuntu 26.04 Resolute
+- Xorg + Openbox
+- Chromium у `--app` режимі
+- фізичний HDMI: 1024×600
+- поворот: right
+- робоче вікно: 600×1024
+- користувач: `winner`
+
+ESP:
+
+- WT32-ETH01
+- LAN8720 Ethernet
+- ESPHome
+- `syssi/esphome-jk-bms`
+- JK-BMS через UART 115200
+- ESPHome Native API з encryption key
+
+## Структура репозиторію
+
+```text
+app/
+  app.py                  backend: ESPHome Native API -> JSON
+  index.html              локальний український HUD
+
+config/
+  kiosk.sh                Chromium watchdog + HDMI + DPMS
+  jk-display.service      systemd backend
+  jk-display.conf.example приклад конфігурації двох BMS
+
+esphome/
+  wt32-jk-bms.yaml        готовий шаблон WT32-ETH01
+  secrets.yaml.example    приклад API encryption key
+
+docs/
+  WT32-ESPHOME-UA.md      підключення та перша прошивка ESP
+
+install.sh
+uninstall.sh
+```
+
+## Встановлення Orange Pi
+
+На свіжому Armbian створіть користувача `winner`, потім:
 
 ```bash
+sudo apt update
+sudo apt install -y git
+
 git clone https://github.com/CCbIKATHO/orangepi-ha-kiosk.git
 cd orangepi-ha-kiosk
+
+sudo ./install.sh
 ```
 
-Run the installer and provide your Home Assistant URL:
+Інсталятор:
 
-```bash
-sudo ./install.sh http://192.168.55.1
-```
+1. встановлює Xorg, Openbox, Chromium та утиліти;
+2. встановлює Python backend у `/opt/jk-display`;
+3. створює venv і ставить `aioesphomeapi` + `aiohttp`;
+4. створює `jk-display.service`;
+5. налаштовує autologin `winner`;
+6. запускає Openbox;
+7. запускає Chromium у режимі застосунку;
+8. примусово тримає вікно 600×1024;
+9. вимикає DPMS/screensaver;
+10. автоматично перезапускає Chromium після падіння.
 
-Replace the URL with the actual Home Assistant dashboard URL if different.
+## Налаштування BMS на Orange Pi
 
-Reboot:
-
-```bash
-sudo reboot
-```
-
-The expected boot path is:
+Конфіг:
 
 ```text
-Armbian
-  -> automatic login as winner on tty1
-  -> startx
-  -> Openbox
-  -> display configuration
-  -> Firefox --kiosk
-  -> Home Assistant
+/etc/jk-display.conf
 ```
 
-## Configuration
+Приклад:
 
-The installed configuration is stored in:
+```bash
+BMS24_HOST=192.168.1.204
+BMS24_PORT=6053
+BMS24_KEY=YOUR_ESPHOME_API_KEY
+
+BMS48_HOST=
+BMS48_PORT=6053
+BMS48_KEY=YOUR_ESPHOME_API_KEY
+```
+
+Якщо другого BMS ще немає, залиште `BMS48_HOST=` порожнім.
+
+Після зміни:
+
+```bash
+sudo systemctl restart jk-display
+```
+
+Перевірка:
+
+```bash
+systemctl status jk-display --no-pager
+curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8080/api/state
+```
+
+## ESPHome / WT32-ETH01
+
+Повна інструкція:
+
+[docs/WT32-ESPHOME-UA.md](docs/WT32-ESPHOME-UA.md)
+
+Шаблон:
 
 ```text
-/etc/orangepi-ha-kiosk.conf
+esphome/wt32-jk-bms.yaml
 ```
 
-Example:
+Для 48V другого модуля достатньо змінити:
 
-```bash
-KIOSK_URL="http://192.168.55.1"
-HDMI_OUTPUT="HDMI-1-1"
-HDMI_MODE="1024x600"
-ROTATION="right"
-FRAMEBUFFER="600x1024"
-DISABLE_OUTPUT="Composite-1"
+```yaml
+substitutions:
+  device_name: jk-bms-48v
+  friendly_name: "JK BMS 48V"
 ```
 
-After changing it, restart the graphical session or reboot.
+та використати окремий API encryption key або той самий ключ, якщо це свідомо потрібно у вашій мережі.
 
-## Diagnostics
+## Підключення WT32 до JK-BMS
 
-Check whether X is running:
-
-```bash
-pgrep -a Xorg
-```
-
-Check Firefox:
-
-```bash
-pgrep -a firefox
-```
-
-Check the display from SSH:
-
-```bash
-sudo -u winner DISPLAY=:0 xrandr
-```
-
-Expected important lines:
+У перевіреній схемі використовується GPS/UART порт JK-BMS:
 
 ```text
-Screen 0: ... current 600 x 1024
-HDMI-1-1 connected primary 600x1024 ... right
-Composite-1 connected ...
+WT32 GPIO4  (TX) -> JK-BMS RX
+WT32 GPIO35 (RX) <- JK-BMS TX
+WT32 GND          -> JK-BMS GND
 ```
 
-Composite may still be physically reported as connected, but it must not extend the framebuffer.
+UART:
 
-View the kiosk log:
+```text
+115200 baud
+```
+
+Ethernet WT32-ETH01:
+
+```text
+MDC       GPIO23
+MDIO      GPIO18
+CLK       GPIO0 / CLK_EXT_IN
+PHY addr  1
+POWER     GPIO16
+```
+
+> У різних ревізій JK-BMS роз'єм і порядок контактів можуть відрізнятися. Не орієнтуйтеся лише на колір дроту: перед підключенням перевірте TX/RX/GND саме для своєї моделі.
+
+**Не подавайте напругу акумуляторної збірки безпосередньо на WT32-ETH01.**
+
+## Home Assistant
+
+Home Assistant не потрібен для роботи дисплея.
+
+За бажанням WT32 можна одночасно додати в HA через інтеграцію ESPHome, використавши IP WT32 та Native API encryption key.
+
+Orange Pi та Home Assistant можуть читати один ESPHome-пристрій паралельно.
+
+## Діагностика
+
+Backend:
 
 ```bash
-cat /home/winner/.local/state/orangepi-ha-kiosk.log
+systemctl status jk-display --no-pager -l
+journalctl -u jk-display -f
 ```
 
-Temporarily stop Firefox:
+API:
 
 ```bash
-pkill -u winner firefox
+curl -s http://127.0.0.1:8080/api/state
 ```
 
-The kiosk loop will start it again.
+Chromium:
 
-## Update
+```bash
+ps -ef | grep chromium | grep -v grep
+wmctrl -lG
+```
+
+Очікуване вікно: **600×1024**.
+
+Kiosk log:
+
+```bash
+tail -f /home/winner/.local/state/jk-chromium.log
+```
+
+X/HDMI:
+
+```bash
+sudo -u winner env DISPLAY=:0 XAUTHORITY=/home/winner/.Xauthority xrandr --query
+```
+
+DPMS:
+
+```bash
+sudo -u winner env DISPLAY=:0 XAUTHORITY=/home/winner/.Xauthority xset q
+```
+
+Екран не повинен автоматично гаснути.
+
+## Оновлення
 
 ```bash
 cd orangepi-ha-kiosk
@@ -133,19 +253,25 @@ sudo ./install.sh
 sudo reboot
 ```
 
-Running the installer without a URL preserves the URL already stored in `/etc/orangepi-ha-kiosk.conf`.
+Інсталятор **не перезаписує** вже наявний `/etc/jk-display.conf`, тому IP та ключі BMS зберігаються.
 
-## Uninstall
+## Видалення автозапуску
 
 ```bash
 sudo ./uninstall.sh
 sudo reboot
 ```
 
-This removes kiosk-specific autologin/startup configuration. It does not remove Firefox, Xorg or Openbox.
+`/opt/jk-display` і `/etc/jk-display.conf` навмисно не видаляються, щоб не втратити робочий конфіг.
 
-## Notes
+## Безпека
 
-This project deliberately avoids XFCE/LXDE and a display manager. On a small H3 board this keeps the kiosk simple and reduces RAM/CPU overhead.
+Не комітьте реальні ESPHome API encryption keys у GitHub.
 
-If the SD card starts producing errors such as `Input/output error`, `EXT4-fs error` or `mmcblk0` I/O failures, stop troubleshooting the kiosk first and check/replace the storage.
+Згенерувати ключ:
+
+```bash
+openssl rand -base64 32
+```
+
+Один і той самий ключ із YAML ESPHome потрібно вказати у відповідному `BMS24_KEY` або `BMS48_KEY` на Orange Pi.
