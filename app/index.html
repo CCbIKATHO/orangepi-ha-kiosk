@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Система живлення</title>
+
+<style>
+* { box-sizing:border-box; }
+
+:root {
+    --bg:#05080c;
+    --panel:#0c1219;
+    --panel2:#111a23;
+    --line:#22303c;
+    --text:#f4f8fb;
+    --muted:#6f8090;
+    --green:#22e58b;
+    --orange:#ff9f3d;
+    --red:#ff5060;
+    --blue:#4eaaff;
+}
+
+html, body {
+    width:600px;
+    height:1024px;
+    margin:0;
+    padding:0;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 50% -15%, #17334a 0%, transparent 42%),
+        #05080c;
+    color:var(--text);
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body {
+    padding:7px;
+    display:grid;
+    grid-template-rows:1fr 1fr;
+    gap:7px;
+    position:relative;
+}
+
+body::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:.10;
+    background-image:
+      linear-gradient(rgba(80,140,180,.18) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(80,140,180,.18) 1px,transparent 1px);
+    background-size:30px 30px;
+    animation:gridMove 14s linear infinite;
+}
+
+@keyframes gridMove {
+    to { background-position:30px 30px; }
+}
+
+.battery {
+    position:relative;
+    z-index:1;
+    min-height:0;
+    overflow:hidden;
+    border-radius:23px;
+    border:1px solid var(--line);
+    background:
+      linear-gradient(
+        145deg,
+        rgba(18,27,36,.98),
+        rgba(7,12,17,.98)
+      );
+    padding:14px 16px 12px;
+    display:grid;
+    grid-template-rows:auto 1fr auto auto;
+    gap:7px;
+    transition:border-color .4s, box-shadow .4s;
+}
+
+.battery.charge {
+    border-color:rgba(34,229,139,.42);
+    box-shadow:
+      inset 0 0 25px rgba(34,229,139,.025),
+      0 0 18px rgba(34,229,139,.05);
+}
+
+.battery.discharge {
+    border-color:rgba(255,159,61,.45);
+}
+
+.battery.alarm {
+    border-color:rgba(255,80,96,.65);
+    animation:alarmPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes alarmPulse {
+    50% {
+        box-shadow:
+          0 0 30px rgba(255,80,96,.22),
+          inset 0 0 20px rgba(255,80,96,.05);
+    }
+}
+
+.header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.title {
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.battery-symbol {
+    width:37px;
+    height:21px;
+    border:3px solid var(--green);
+    border-radius:5px;
+    position:relative;
+}
+
+.battery-symbol::after {
+    content:"";
+    position:absolute;
+    right:-7px;
+    top:5px;
+    width:5px;
+    height:7px;
+    background:var(--green);
+    border-radius:0 2px 2px 0;
+}
+
+.battery-symbol::before {
+    content:"";
+    position:absolute;
+    inset:4px;
+    right:8px;
+    background:var(--green);
+    border-radius:2px;
+}
+
+.name {
+    font-size:34px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:.4px;
+}
+
+.sub {
+    margin-top:4px;
+    color:var(--muted);
+    font-size:11px;
+    letter-spacing:.8px;
+}
+
+.status {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 11px;
+    border-radius:17px;
+    border:1px solid #293641;
+    background:#151d25;
+    color:#8996a3;
+    font-size:12px;
+    font-weight:900;
+}
+
+.dot {
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#66727e;
+}
+
+.status.online {
+    color:#b8ffda;
+    background:rgba(34,229,139,.08);
+    border-color:rgba(34,229,139,.30);
+}
+
+.status.online .dot {
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+    animation:online 1.3s ease-in-out infinite;
+}
+
+@keyframes online {
+    50% {
+        opacity:.4;
+        box-shadow:0 0 17px var(--green);
+    }
+}
+
+.center {
+    display:grid;
+    grid-template-columns:190px 1fr;
+    gap:17px;
+    align-items:center;
+    min-height:0;
+}
+
+.ring {
+    --soc:0;
+    --ring-color:var(--green);
+    width:184px;
+    height:184px;
+    justify-self:center;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    position:relative;
+    background:
+      conic-gradient(
+        var(--ring-color) calc(var(--soc) * 1%),
+        #202a34 0
+      );
+    transition:.7s ease;
+}
+
+.ring::before {
+    content:"";
+    position:absolute;
+    inset:14px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle,#111820 0%,#080d12 72%);
+}
+
+.ring::after {
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border-radius:50%;
+    border:2px solid transparent;
+    border-top-color:var(--ring-color);
+    border-right-color:rgba(255,255,255,.04);
+    opacity:.55;
+    animation:spin 4s linear infinite;
+}
+
+@keyframes spin {
+    to { transform:rotate(360deg); }
+}
+
+.soc-content {
+    position:relative;
+    z-index:2;
+    text-align:center;
+}
+
+.soc-value {
+    font-size:67px;
+    line-height:.92;
+    font-weight:900;
+}
+
+.soc-unit {
+    color:var(--muted);
+    font-size:24px;
+}
+
+.soc-caption {
+    margin-top:7px;
+    color:var(--muted);
+    font-size:10px;
+    letter-spacing:1.3px;
+}
+
+.right { min-width:0; }
+
+.mode {
+    font-size:35px;
+    line-height:1;
+    font-weight:900;
+    margin-bottom:9px;
+}
+
+.mode.charge { color:var(--green); }
+.mode.discharge { color:var(--orange); }
+.mode.idle { color:var(--blue); }
+.mode.offline { color:#687582; }
+
+.flow-track {
+    height:7px;
+    border-radius:8px;
+    background:#1a252e;
+    overflow:hidden;
+    position:relative;
+    margin-bottom:12px;
+}
+
+.flow {
+    position:absolute;
+    inset:0;
+    opacity:0;
+    background-size:46px 7px;
+}
+
+.flow.charge {
+    opacity:1;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 13px,
+        var(--green) 13px 23px
+      );
+    animation:flowCharge .7s linear infinite;
+}
+
+.flow.discharge {
+    opacity:1;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0 13px,
+        var(--orange) 13px 23px
+      );
+    animation:flowDischarge .7s linear infinite;
+}
+
+@keyframes flowCharge {
+    from { transform:translateX(-46px); }
+    to { transform:translateX(0); }
+}
+
+@keyframes flowDischarge {
+    from { transform:translateX(0); }
+    to { transform:translateX(-46px); }
+}
+
+.metrics {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+}
+
+.metric {
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:8px 11px;
+    border-radius:11px;
+    border:1px solid #1e2a35;
+    background:#101821;
+}
+
+.metric-label {
+    color:var(--muted);
+    font-size:12px;
+    letter-spacing:.7px;
+}
+
+.metric-value {
+    font-size:27px;
+    line-height:1;
+    font-weight:900;
+}
+
+.details {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:7px;
+}
+
+.detail {
+    min-height:56px;
+    padding:7px 4px;
+    border-radius:11px;
+    border:1px solid #1d2934;
+    background:#0e161e;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    text-align:center;
+}
+
+.detail-value {
+    font-size:22px;
+    line-height:1;
+    font-weight:900;
+}
+
+.detail-label {
+    margin-top:6px;
+    color:var(--muted);
+    font-size:9px;
+    letter-spacing:.7px;
+}
+
+.bottom {
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:8px;
+    align-items:center;
+}
+
+.error {
+    min-width:0;
+    height:34px;
+    display:flex;
+    align-items:center;
+    padding:0 11px;
+    border-radius:10px;
+    border:1px solid rgba(34,229,139,.17);
+    background:rgba(34,229,139,.05);
+    color:#9ef1c3;
+    font-size:12px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.error.bad {
+    color:#ffc0c5;
+    border-color:rgba(255,80,96,.28);
+    background:rgba(255,80,96,.09);
+}
+
+.updated {
+    color:#485765;
+    font-size:9px;
+    white-space:nowrap;
+}
+
+.flash {
+    animation:flash .35s ease;
+}
+
+@keyframes flash {
+    50% {
+        transform:scale(1.07);
+        text-shadow:0 0 13px currentColor;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<section id="battery24" class="battery">
+    <div class="header">
+        <div class="title">
+            <div class="battery-symbol"></div>
+            <div>
+                <div class="name">АКБ 24V</div>
+                <div class="sub">JK-BMS · ETHERNET</div>
+            </div>
+        </div>
+        <div id="status24" class="status">
+            <div class="dot"></div>
+            <span id="statusText24">...</span>
+        </div>
+    </div>
+
+    <div class="center">
+        <div id="ring24" class="ring" style="--soc:0">
+            <div class="soc-content">
+                <div>
+                    <span id="soc24" class="soc-value">--</span>
+                    <span class="soc-unit">%</span>
+                </div>
+                <div class="soc-caption">РІВЕНЬ ЗАРЯДУ</div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div id="mode24" class="mode offline">НЕМАЄ ДАНИХ</div>
+
+            <div class="flow-track">
+                <div id="flow24" class="flow"></div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <span class="metric-label">НАПРУГА</span>
+                    <span id="voltage24" class="metric-value">--</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">СТРУМ</span>
+                    <span id="current24" class="metric-value">--</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">ПОТУЖНІСТЬ</span>
+                    <span id="power24" class="metric-value">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="details">
+        <div class="detail">
+            <div id="delta24" class="detail-value">--</div>
+            <div class="detail-label">Δ КОМІРОК</div>
+        </div>
+        <div class="detail">
+            <div id="temp24" class="detail-value">--</div>
+            <div class="detail-label">АКБ</div>
+        </div>
+        <div class="detail">
+            <div id="mos24" class="detail-value">--</div>
+            <div class="detail-label">MOSFET</div>
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div id="error24" class="error">Очікування даних</div>
+        <div id="updated24" class="updated"></div>
+    </div>
+</section>
+
+<section id="battery48" class="battery">
+    <div class="header">
+        <div class="title">
+            <div class="battery-symbol"></div>
+            <div>
+                <div class="name">АКБ 48V</div>
+                <div class="sub">JK-BMS · ETHERNET</div>
+            </div>
+        </div>
+        <div id="status48" class="status">
+            <div class="dot"></div>
+            <span id="statusText48">...</span>
+        </div>
+    </div>
+
+    <div class="center">
+        <div id="ring48" class="ring" style="--soc:0">
+            <div class="soc-content">
+                <div>
+                    <span id="soc48" class="soc-value">--</span>
+                    <span class="soc-unit">%</span>
+                </div>
+                <div class="soc-caption">РІВЕНЬ ЗАРЯДУ</div>
+            </div>
+        </div>
+
+        <div class="right">
+            <div id="mode48" class="mode offline">ОЧІКУЄ BMS</div>
+
+            <div class="flow-track">
+                <div id="flow48" class="flow"></div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <span class="metric-label">НАПРУГА</span>
+                    <span id="voltage48" class="metric-value">--</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">СТРУМ</span>
+                    <span id="current48" class="metric-value">--</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">ПОТУЖНІСТЬ</span>
+                    <span id="power48" class="metric-value">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="details">
+        <div class="detail">
+            <div id="delta48" class="detail-value">--</div>
+            <div class="detail-label">Δ КОМІРОК</div>
+        </div>
+        <div class="detail">
+            <div id="temp48" class="detail-value">--</div>
+            <div class="detail-label">АКБ</div>
+        </div>
+        <div class="detail">
+            <div id="mos48" class="detail-value">--</div>
+            <div class="detail-label">MOSFET</div>
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div id="error48" class="error">WT32 ще не підключено</div>
+        <div id="updated48" class="updated"></div>
+    </div>
+</section>
+
+<script>
+const el = id => document.getElementById(id);
+
+function num(v) {
+    if (v === null || v === undefined) return null;
+    const x = Number(v);
+    return Number.isFinite(x) ? x : null;
+}
+
+function fmt(v,d,s) {
+    const x=num(v);
+    return x===null ? "--" : x.toFixed(d)+s;
+}
+
+const previous={};
+
+function setValue(id,value) {
+    const e=el(id);
+    if(previous[id] !== value) {
+        previous[id]=value;
+        e.textContent=value;
+        e.classList.remove("flash");
+        void e.offsetWidth;
+        e.classList.add("flash");
+    }
+}
+
+function socColor(soc) {
+    if(soc === null) return "#53616d";
+    if(soc < 20) return "#ff5060";
+    if(soc < 50) return "#ff9f3d";
+    return "#22e58b";
+}
+
+const errorMap = {
+    "Discharge undervoltage":"Низька напруга під час розряду",
+    "Charge overvoltage":"Перенапруга під час заряджання",
+    "Charge overcurrent":"Завеликий струм заряджання",
+    "Discharge overcurrent":"Завеликий струм розряду",
+    "MOS overtemperature":"Перегрів MOSFET",
+    "Battery overtemperature":"Перегрів акумулятора",
+    "Low capacity":"Низький рівень заряду"
+};
+
+function translateError(value) {
+    const raw=String(value || "").trim();
+    if(!raw) return "";
+    return raw.split(",").map(x => {
+        const item=x.trim();
+        return errorMap[item] || item;
+    }).join(", ");
+}
+
+function hasRealError(value) {
+    const raw=String(value || "").trim().toLowerCase();
+    return raw && raw !== "no errors" && raw !== "none" && raw !== "ok";
+}
+
+function render(prefix,data) {
+    if(!data) return;
+
+    const v=data.values || {};
+    const configured=data.configured;
+
+    const online=
+        configured &&
+        data.connected &&
+        data.age !== null &&
+        data.age < 15 &&
+        v["BMS Online"] !== false;
+
+    const status=el("status"+prefix);
+    status.className="status";
+
+    if(online) {
+        status.classList.add("online");
+        el("statusText"+prefix).textContent="В МЕРЕЖІ";
+    } else {
+        el("statusText"+prefix).textContent=
+            configured ? "НЕ В МЕРЕЖІ" : "НЕ НАЛАШТОВАНО";
+    }
+
+    let soc=num(v["State of Charge"]);
+
+    if(soc !== null) {
+        soc=Math.max(0,Math.min(100,soc));
+        setValue("soc"+prefix,String(Math.round(soc)));
+        el("ring"+prefix).style.setProperty("--soc",soc);
+        el("ring"+prefix).style.setProperty("--ring-color",socColor(soc));
+    } else {
+        setValue("soc"+prefix,"--");
+        el("ring"+prefix).style.setProperty("--soc",0);
+    }
+
+    const battery=el("battery"+prefix);
+    const current=num(v["Battery Current"]);
+    const mode=el("mode"+prefix);
+    const flow=el("flow"+prefix);
+
+    battery.className="battery";
+    flow.className="flow";
+
+    if(!configured) {
+        mode.textContent="ОЧІКУЄ BMS";
+        mode.className="mode offline";
+    } else if(!online) {
+        mode.textContent="НЕМАЄ ДАНИХ";
+        mode.className="mode offline";
+    } else if(current !== null && current > .1) {
+        mode.textContent="↑ ЗАРЯД";
+        mode.className="mode charge";
+        flow.classList.add("charge");
+        battery.classList.add("charge");
+    } else if(current !== null && current < -.1) {
+        mode.textContent="↓ РОЗРЯД";
+        mode.className="mode discharge";
+        flow.classList.add("discharge");
+        battery.classList.add("discharge");
+    } else {
+        mode.textContent="ОЧІКУВАННЯ";
+        mode.className="mode idle";
+    }
+
+    setValue("voltage"+prefix,fmt(v["Battery Voltage"],1," V"));
+    setValue("current"+prefix,fmt(v["Battery Current"],1," A"));
+    setValue("power"+prefix,fmt(v["Battery Power"],0," W"));
+
+    el("delta"+prefix).textContent=fmt(v["Cell Voltage Delta"],3," V");
+    el("temp"+prefix).textContent=fmt(v["Battery Temperature 1"],0,"°C");
+    el("mos"+prefix).textContent=fmt(v["MOS Temperature"],0,"°C");
+
+    const error=el("error"+prefix);
+    const err=v["Errors"];
+
+    if(!configured) {
+        error.textContent="WT32 ще не підключено";
+        error.className="error";
+    } else if(hasRealError(err)) {
+        error.textContent="⚠ "+translateError(err);
+        error.className="error bad";
+        battery.classList.add("alarm");
+    } else {
+        error.textContent="✓ BMS без помилок";
+        error.className="error";
+    }
+
+    el("updated"+prefix).textContent=
+        data.age===null ? "" : Math.round(data.age)+" с";
+}
+
+async function update() {
+    try {
+        const response=await fetch("/api/state",{cache:"no-store"});
+        const data=await response.json();
+        render("24",data["24v"]);
+        render("48",data["48v"]);
+    } catch(e) {}
+}
+
+update();
+setInterval(update,1000);
+</script>
+
+</body>
+</html>
