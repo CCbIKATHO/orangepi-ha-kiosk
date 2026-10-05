@@ -6,6 +6,11 @@ on:
     paths:
       - "esphome/wt32-jk-bms-48v-13s.yaml"
       - ".github/workflows/build-wt32-48v.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "esphome/wt32-jk-bms-48v-13s.yaml"
+      - ".github/workflows/build-wt32-48v.yml"
   workflow_dispatch:
 
 jobs:
