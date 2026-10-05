@@ -29,6 +29,7 @@ telegram_offset = 0
 
 def read_gpio() -> str:
     commands = [
+        ["gpioget", "--numeric", "-c", GPIO_CHIP, GPIO_LINE],
         ["gpioget", "-c", GPIO_CHIP, GPIO_LINE],
         ["gpioget", GPIO_CHIP, GPIO_LINE],
     ]
@@ -42,9 +43,9 @@ def read_gpio() -> str:
                 raw = result.stdout.strip().lower()
                 if raw in {"0", "1"}:
                     return raw
-                if raw.endswith("=0"):
+                if "inactive" in raw or raw.endswith("=0"):
                     return "0"
-                if raw.endswith("=1"):
+                if "active" in raw or raw.endswith("=1"):
                     return "1"
             last_error = (result.stderr or result.stdout).strip()
         except Exception as exc:
