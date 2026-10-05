@@ -23,6 +23,7 @@ HOME_DIR="$(getent passwd "$KIOSK_USER" | cut -d: -f6)"
 # При оновленні зі старої Firefox/LightDM версії прибираємо legacy kiosk.
 # Новий dashboard використовує tty1 -> startx -> Openbox -> Chromium.
 systemctl disable --now lightdm.service 2>/dev/null || true
+systemctl mask lightdm.service 2>/dev/null || true
 
 pkill -u "$KIOSK_USER" -f '[f]irefox' 2>/dev/null || true
 pkill -u "$KIOSK_USER" -f '[o]rangepi-ha-kiosk' 2>/dev/null || true
