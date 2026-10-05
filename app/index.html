@@ -37,7 +37,7 @@ html, body {
 body {
     padding:7px;
     display:grid;
-    grid-template-rows:1fr 1fr;
+    grid-template-rows:36px 1fr 1fr;
     gap:7px;
     position:relative;
 }
@@ -57,6 +57,47 @@ body::before {
 
 @keyframes gridMove {
     to { background-position:30px 30px; }
+}
+
+.mains-strip {
+    position:relative;
+    z-index:2;
+    height:36px;
+    border-radius:13px;
+    border:1px solid #293641;
+    background:#101821;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    font-size:15px;
+    font-weight:900;
+    letter-spacing:.5px;
+    color:#8795a2;
+}
+.mains-strip .mains-dot {
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#66727e;
+}
+.mains-strip.on {
+    color:#b8ffda;
+    border-color:rgba(34,229,139,.35);
+    background:rgba(34,229,139,.08);
+}
+.mains-strip.on .mains-dot {
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+}
+.mains-strip.off {
+    color:#ffc0c5;
+    border-color:rgba(255,80,96,.45);
+    background:rgba(255,80,96,.10);
+}
+.mains-strip.off .mains-dot {
+    background:var(--red);
+    box-shadow:0 0 8px var(--red);
 }
 
 .battery {
@@ -442,6 +483,11 @@ body::before {
 
 <body>
 
+<div id="mainsStrip" class="mains-strip">
+    <span class="mains-dot"></span>
+    <span id="mainsText">МЕРЕЖА 220В · ОЧІКУВАННЯ</span>
+</div>
+
 <section id="battery24" class="battery">
     <div class="header">
         <div class="title">
@@ -519,7 +565,7 @@ body::before {
             <div class="battery-symbol"></div>
             <div>
                 <div class="name">АКБ 48V</div>
-                <div class="sub">JK-BMS · ETHERNET</div>
+                <div class="sub">JK-BMS · ETHERNET · 14S</div>
             </div>
         </div>
         <div id="status48" class="status">
@@ -734,10 +780,30 @@ function render(prefix,data) {
         data.age===null ? "" : Math.round(data.age)+" с";
 }
 
+function renderMains(data) {
+    const strip=el("mainsStrip");
+    const text=el("mainsText");
+    strip.className="mains-strip";
+
+    if(!data || data.present === null || data.present === undefined) {
+        text.textContent="МЕРЕЖА 220В · НЕМАЄ ДАНИХ";
+        return;
+    }
+
+    if(data.present === true) {
+        strip.classList.add("on");
+        text.textContent="МЕРЕЖА 220В · Є ЖИВЛЕННЯ";
+    } else {
+        strip.classList.add("off");
+        text.textContent="МЕРЕЖА 220В · НЕМАЄ ЖИВЛЕННЯ";
+    }
+}
+
 async function update() {
     try {
         const response=await fetch("/api/state",{cache:"no-store"});
         const data=await response.json();
+        renderMains(data["mains"]);
         render("24",data["24v"]);
         render("48",data["48v"]);
     } catch(e) {}
