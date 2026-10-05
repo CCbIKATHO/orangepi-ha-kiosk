@@ -1,3 +1,4 @@
+# firmware build trigger
 substitutions:
   device_name: jk-bms-48v
   friendly_name: "JK BMS 48V 13S"
