@@ -1,0 +1,15 @@
+[Unit]
+Description=Orange Pi 220V power monitor and Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=/etc/jk-power-monitor.conf
+ExecStart=/opt/jk-display/venv/bin/python /opt/jk-display/power_monitor.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
