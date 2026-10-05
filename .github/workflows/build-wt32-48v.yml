@@ -1,0 +1,69 @@
+name: Build WT32 JK-BMS 48V 13S firmware
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "esphome/wt32-jk-bms-48v-13s.yaml"
+      - ".github/workflows/build-wt32-48v.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ESPHome
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install esphome
+
+      - name: Generate API encryption key
+        shell: bash
+        run: |
+          KEY="$(openssl rand -base64 32 | tr -d '\n')"
+          printf 'api_encryption_key_48v: "%s"\n' "$KEY" > esphome/secrets.yaml
+          printf '%s\n' "$KEY" > /tmp/api-key.txt
+
+      - name: Validate ESPHome config
+        run: |
+          esphome config esphome/wt32-jk-bms-48v-13s.yaml
+
+      - name: Compile firmware
+        run: |
+          esphome compile esphome/wt32-jk-bms-48v-13s.yaml
+
+      - name: Collect firmware
+        shell: bash
+        run: |
+          mkdir -p dist
+          BUILD_DIR="esphome/.esphome/build/jk-bms-48v/.pioenvs/jk-bms-48v"
+          cp "$BUILD_DIR/firmware.factory.bin" dist/jk-bms-48v-13s.factory.bin
+          cp "$BUILD_DIR/firmware.bin" dist/jk-bms-48v-13s.ota.bin
+          cp /tmp/api-key.txt dist/api-key.txt
+          cat > dist/README.txt <<'EOF'
+JK-BMS 48V 13S / WT32-ETH01
+
+First flash over USB-TTL:
+  jk-bms-48v-13s.factory.bin
+
+OTA update:
+  jk-bms-48v-13s.ota.bin
+
+ESPHome Native API encryption key:
+  api-key.txt
+
+UART to JK-BMS:
+  WT32 GPIO4  TX -> JK-BMS RX
+  WT32 GPIO35 RX <- JK-BMS TX
+  WT32 GND       -> JK-BMS GND
+EOF
+
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: wt32-jk-bms-48v-13s
+          path: dist/
+          if-no-files-found: error
