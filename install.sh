@@ -49,13 +49,12 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
     xserver-xorg xinit openbox chromium x11-xserver-utils wmctrl \
-    unclutter dbus-x11 ca-certificates gpiod \
+    unclutter dbus-x11 ca-certificates \
     python3 python3-venv python3-dev build-essential libffi-dev pkg-config
 
 install -d -m 755 "$APP_DIR"
 install -m 644 "$SCRIPT_DIR/app/app.py" "$APP_DIR/app.py"
 install -m 644 "$SCRIPT_DIR/app/index.html" "$APP_DIR/index.html"
-install -m 755 "$SCRIPT_DIR/app/power_monitor.py" "$APP_DIR/power_monitor.py"
 
 if [ ! -d "$APP_DIR/venv" ]; then
     python3 -m venv "$APP_DIR/venv"
@@ -75,15 +74,6 @@ else
 fi
 
 install -m 644 "$SCRIPT_DIR/config/jk-display.service" /etc/systemd/system/jk-display.service
-install -m 644 "$SCRIPT_DIR/config/jk-power-monitor.service" /etc/systemd/system/jk-power-monitor.service
-
-if [ ! -f /etc/jk-power-monitor.conf ]; then
-    install -m 600 "$SCRIPT_DIR/config/jk-power-monitor.conf.example" /etc/jk-power-monitor.conf
-    echo "Створено /etc/jk-power-monitor.conf."
-else
-    chmod 600 /etc/jk-power-monitor.conf
-    echo "Збережено наявний /etc/jk-power-monitor.conf."
-fi
 install -m 755 "$SCRIPT_DIR/config/kiosk.sh" /usr/local/bin/jk-dashboard-start
 
 cat > "$KIOSK_CONF" <<'EOF'
@@ -144,7 +134,6 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now jk-display.service
-systemctl enable --now jk-power-monitor.service
 systemctl set-default multi-user.target
 
 echo
@@ -152,7 +141,6 @@ echo "JK-BMS Dashboard встановлено."
 echo "Користувач: $KIOSK_USER"
 echo "Веб-інтерфейс: http://127.0.0.1:8080"
 echo "BMS конфіг: $BMS_CONF"
-echo "220V/Telegram конфіг: /etc/jk-power-monitor.conf"
 echo
 echo "Після налаштування BMS виконайте:"
 echo "  sudo systemctl restart jk-display"
