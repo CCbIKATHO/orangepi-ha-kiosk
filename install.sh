@@ -20,6 +20,30 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOME_DIR="$(getent passwd "$KIOSK_USER" | cut -d: -f6)"
 
+# При оновленні зі старої Firefox/LightDM версії прибираємо legacy kiosk.
+# Новий dashboard використовує tty1 -> startx -> Openbox -> Chromium.
+systemctl disable --now lightdm.service 2>/dev/null || true
+
+pkill -u "$KIOSK_USER" -f '[f]irefox' 2>/dev/null || true
+pkill -u "$KIOSK_USER" -f '[o]rangepi-ha-kiosk' 2>/dev/null || true
+pkill -u "$KIOSK_USER" -f '[f]ix-firefox-size' 2>/dev/null || true
+pkill -u "$KIOSK_USER" -f '[j]k-kiosk-viewer' 2>/dev/null || true
+pkill -u "$KIOSK_USER" -f '[j]k-kiosk-start' 2>/dev/null || true
+
+rm -f /usr/local/bin/orangepi-ha-kiosk
+rm -f /usr/local/bin/fix-firefox-size
+rm -f /usr/local/bin/jk-kiosk-viewer
+rm -f /usr/local/bin/jk-kiosk-start
+
+if [ -d "$HOME_DIR/.config/autostart" ]; then
+    while IFS= read -r file; do
+        rm -f "$file"
+    done < <(
+        grep -RIlE 'firefox|orangepi-ha-kiosk|fix-firefox-size|jk-kiosk-viewer|jk-kiosk-start' \
+            "$HOME_DIR/.config/autostart" 2>/dev/null || true
+    )
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
