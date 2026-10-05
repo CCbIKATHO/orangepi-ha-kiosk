@@ -1,0 +1,11 @@
+# ESPHome Native API endpoint for the 24 V battery.
+# Leave HOST empty if this battery is not installed.
+BMS24_HOST=
+BMS24_PORT=6053
+BMS24_KEY=PASTE_ESPHOME_API_ENCRYPTION_KEY_HERE
+
+# ESPHome Native API endpoint for the 48 V battery.
+# Leave HOST empty until the second WT32-ETH01 is installed.
+BMS48_HOST=
+BMS48_PORT=6053
+BMS48_KEY=PASTE_ESPHOME_API_ENCRYPTION_KEY_HERE
